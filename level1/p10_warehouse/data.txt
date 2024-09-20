@@ -1,0 +1,8 @@
+7
+daiof 10
+rrr 9
+pear 5
+apple 10
+banana 10
+lambda 8
+jjjj 9
