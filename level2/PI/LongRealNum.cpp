@@ -10,7 +10,7 @@
 #include <format>
 #include <sstream>
 
-#define DEBUG_MODE
+// #define DEBUG_MODE
 
 namespace pi_task {
     LongRealNum::LongRealNum(): sign(false){};
