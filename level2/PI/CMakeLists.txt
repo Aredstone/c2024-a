@@ -6,4 +6,6 @@ add_executable(
         LongRealNum.h
         main.cpp
         LongRealNum.cpp
+        SignedLongRealNum.cpp
+        SignedLongRealNum.h
 )

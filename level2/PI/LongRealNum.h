@@ -13,10 +13,14 @@ namespace pi_task {
     public:
         LongRealNum();
         explicit LongRealNum(const std::string& s);
+        explicit LongRealNum(long long l1, long long l2);
         explicit LongRealNum(long long l);
         explicit LongRealNum(int i);
 
+        LongRealNum operator-() const;
+
         friend std::ostream& operator<<(std::ostream& os, const LongRealNum& lr);
+
         friend LongRealNum operator+(const LongRealNum& lr1, const LongRealNum& lr2);
         friend LongRealNum operator-(const LongRealNum& lr1, const LongRealNum& lr2);
         friend LongRealNum operator*(const LongRealNum& lr1, const LongRealNum& lr2);
@@ -32,6 +36,7 @@ namespace pi_task {
 
     private:
         std::string num;
+        bool sign{};
         void fix();
     };
 }

@@ -8,13 +8,17 @@
 #include <stdexcept>
 #include <iostream>
 #include <format>
+#include <sstream>
 
-// #define DEBUG_MODE
+#define DEBUG_MODE
 
 namespace pi_task {
-    LongRealNum::LongRealNum() = default;
+    LongRealNum::LongRealNum(): sign(false){};
 
     LongRealNum::LongRealNum(const std::string &s) {
+        if (s[0] == '-') {
+            sign = true;
+        }
         std::string tmp;
         size_t save = s.length() - 1;
         size_t l = s.length();
@@ -25,7 +29,7 @@ namespace pi_task {
                     l = EXPS + 1 + save;
             } else if (isdigit(s[i])) {
                 tmp += s[i];
-            } else {
+            } else if (s[i] != '-') {
                 std::cerr << std::format("Illegal character '{}' in pos {}. The complete string is {}\n", s[i], i, s);
                 throw std::invalid_argument("Invalid");
             }
@@ -38,6 +42,24 @@ namespace pi_task {
         fix();
     }
 
+    LongRealNum::LongRealNum(long long l1, long long l2) {
+        // std::swap(l1, l2);
+        std::string tmp(std::to_string(l1 / l2));
+        if ((l1 < 0 && l2 > 0) || (l1 > 0 && l2 < 0)) {
+            tmp = '-' + tmp;
+            l1 = std::abs(l1);
+            l2 = std::abs(l2);
+        }
+        tmp += '.';
+        l1 %= l2;
+        for (int i = 0; i < EXPS; i++) {
+            l1 *= 10;
+            tmp += (l1 / l2) + '0';
+            l1 %= l2;
+        }
+        *this = LongRealNum(tmp);
+    }
+
     LongRealNum::LongRealNum(const int i) {
         *this = LongRealNum(std::to_string(i));
     }
@@ -48,6 +70,8 @@ namespace pi_task {
 
     std::ostream &operator<<(std::ostream &os, const LongRealNum &lr) {
         const std::string &tmp = lr.num;
+        if (lr.sign)
+            os << '-';
         if (tmp.length() == EXPS)
             os << '0';
         for (int i = tmp.length() - 1; i >= 0; i--) {
@@ -77,10 +101,21 @@ namespace pi_task {
         }
     }
 
+    LongRealNum LongRealNum::operator-() const {
+        LongRealNum tmp = *this;
+        tmp.sign = !sign;
+        return tmp;
+    }
 
     LongRealNum operator+(const LongRealNum &lr1, const LongRealNum &lr2) {
         if (lr1.num.length() < lr2.num.length()) {
             return lr2 + lr1;
+        }
+        if (lr1.sign) {
+            return lr2 - (-lr1);
+        }
+        if (lr2.sign) {
+            return lr1 - (-lr2);
         }
 
         const std::string y(lr2.num);
@@ -124,13 +159,15 @@ namespace pi_task {
     }
 
     LongRealNum operator-(const LongRealNum &lr1, const LongRealNum &lr2) {
-#ifdef DEBUG_MODE
-        if (lr1.num.length() < lr2.num.length()) {
-            std::cerr << std::format("Something bad happened in LongRealNum::operator-, because lr1 < lr2.\n"
-                                     "lr1 is {}\n and \nlr2 is {}\n ", lr1.num, lr2.num);
-            throw std::runtime_error("Something bad happened");
+        if (lr1.sign) {
+            return -(-lr1 + lr2);
         }
-#endif
+        if (lr2.sign) {
+            return lr1 + (-lr2);
+        }
+        if (lr1 < lr2) {
+            return -(lr2 - lr1);
+        }
 
         const std::string y(lr2.num);
         std::string x(lr1.num);
@@ -178,6 +215,13 @@ namespace pi_task {
         return lr2 * lr1;
     }
     LongRealNum operator*(const long long &lr1, const LongRealNum &lr2) {
+        if (lr2.sign) {
+            return -(lr1 * (-lr2));
+        }
+        if (lr1 < 0) {
+            return -((-lr1) * lr2);
+        }
+
         std::string x = std::to_string(lr1);
         std::ranges::reverse(x);
         const std::string& y = lr2.num;
@@ -212,7 +256,7 @@ namespace pi_task {
         } catch (...) {
             std::cerr << std::format("Something bad happened in LongRealNum::operator* when try to fix result.\n"
                                      "Between {}\n and {}\n "
-                                     "Begin to traceback.\n", lr1.num, lr2.num);
+                                     "Begin to traceback.\n", lr1, lr2.num);
             throw std::runtime_error("Something bad happened");
         }
 #endif
@@ -220,6 +264,13 @@ namespace pi_task {
     }
 
     LongRealNum operator*(const LongRealNum &lr1, const LongRealNum &lr2) {
+        if (lr2.sign) {
+            return -(lr1 * (-lr2));
+        }
+        if (lr1.sign) {
+            return -((-lr1) * lr2);
+        }
+
         const std::string& x = lr1.num;
         const std::string& y = lr2.num;
         int lx = x.length();
@@ -264,29 +315,39 @@ namespace pi_task {
     }
 
     bool operator==(const LongRealNum &lr1, const LongRealNum &lr2) {
+        if (lr1.sign != lr2.sign)
+            return false;
         return lr1.num == lr2.num;
     }
     bool operator!=(const LongRealNum &lr1, const LongRealNum &lr2) {
+        if (lr1.sign != lr2.sign)
+            return true;
         return lr1.num != lr2.num;
     }
     bool operator<(const LongRealNum &lr1, const LongRealNum &lr2) {
+        if (lr1.sign != lr2.sign) {
+            return lr1.sign > lr2.sign;
+        }
         if (lr1.num.length() != lr2.num.length()) {
-            return lr1.num.length() < lr2.num.length();
+            return (lr1.num.length() < lr2.num.length()) ^ lr1.sign;
         }
         for (int i = lr1.num.length() - 1; i >= 0; i--) {
             if (lr1.num[i] != lr2.num[i]) {
-                return lr1.num[i] < lr2.num[i];
+                return (lr1.num[i] < lr2.num[i]) ^ lr1.sign;
             }
         }
         return false;
     }
     bool operator>(const LongRealNum &lr1, const LongRealNum &lr2) {
+        if (lr1.sign != lr2.sign) {
+            return lr1.sign < lr2.sign;
+        }
         if (lr1.num.length() != lr2.num.length()) {
-            return lr1.num.length() > lr2.num.length();
+            return lr1.num.length() > lr2.num.length() ^ lr1.sign;
         }
         for (int i = lr1.num.length() - 1; i >= 0; i--) {
             if (lr1.num[i] != lr2.num[i]) {
-                return lr1.num[i] > lr2.num[i];
+                return lr1.num[i] > lr2.num[i] ^ lr1.sign;
             }
         }
         return false;
@@ -300,7 +361,12 @@ namespace pi_task {
     }
 
     LongRealNum operator/(LongRealNum lr1, LongRealNum lr2) {
-        int save = -1;
+        if (lr2.sign) {
+            return -(lr1 / (-lr2));
+        }
+        if (lr1.sign) {
+            return -((-lr1) / lr2);
+        }
 
         int cnt1 = 0;
         while(lr1.num[lr1.num.length() - 1] == '0')
@@ -312,7 +378,7 @@ namespace pi_task {
             cnt2 += 1;
         lr2.num = lr2.num.substr(0, lr2.num.length() - cnt2);
 
-        save = lr1.num.length() - lr2.num.length();
+        int save = lr1.num.length() - lr2.num.length();
 
         if (lr1.num.length() > lr2.num.length()) {
             lr2.num = std::string(lr1.num.length() + EXPS + 1 - lr2.num.length(), '0') + lr2.num;

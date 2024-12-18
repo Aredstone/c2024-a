@@ -1,42 +1,27 @@
-//
-// Created by a1823 on 24-12-17.
-//
-
-
 #include <format>
 #include <iostream>
 #include "LongRealNum.h"
 
 int main() {
-    pi_task::EXPS = 1000;
+    pi_task::EXPS = 10010;
 
     long long start = clock();
+    pi_task::LongRealNum ans(0);
+    pi_task::LongRealNum num_16(1);
 
-    pi_task::LongRealNum num_1("1");
-    pi_task::LongRealNum num_2("2");
-    pi_task::LongRealNum num_4("4");
-    pi_task::LongRealNum num_5("5");
-    pi_task::LongRealNum num_6("6");
-    pi_task::LongRealNum num_8("8");
-    pi_task::LongRealNum num_16_k("1");
-    pi_task::LongRealNum num_tmp("0");
-    pi_task::LongRealNum num_ans("0");
-
-    for (int i = 0; i <= 900; i++) {
-        num_tmp = num_8 * i;
-        num_ans = num_ans + (num_1 / num_16_k) *
-            (num_4 / (num_tmp + num_1) -
-                num_2 / (num_tmp + num_4) -
-                num_1 / (num_tmp + num_5) -
-                num_1 / (num_tmp + num_6));
-        num_16_k = num_16_k * 16;
-        std::cout << std::format("k = {}, now = ", i);
-        std::cout << num_ans << std::endl;
+    for (int i = 0; i <= 8700; i++) {
+        ans = ans * 16 + (
+            pi_task::LongRealNum(4, 8 * i + 1) -
+            pi_task::LongRealNum(2, 8 * i + 4) -
+            pi_task::LongRealNum(1, 8 * i + 5) -
+            pi_task::LongRealNum(1, 8 * i + 6));
+        num_16 = num_16 * 16;
     }
-    long long end = clock();
-    std::cout << num_ans << std::endl;
-    std::cout << "Time elapsed: " << std::format("{} seconds\n", static_cast<double>(end - start) / CLOCKS_PER_SEC);
 
+    std::cout << ans * 16 / num_16 << std::endl;
+    std::cout << "Time elapsed: " << std::format("{} seconds\n", static_cast<double>(clock() - start) / CLOCKS_PER_SEC);
+
+    // 1w 61.364s
     return 0;
 }
 
