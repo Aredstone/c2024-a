@@ -21,7 +21,7 @@ int main() {
     std::cout << ans * 16 / num_16 << std::endl;
     std::cout << "Time elapsed: " << std::format("{} seconds\n", static_cast<double>(clock() - start) / CLOCKS_PER_SEC);
 
-    // 1w 6.55s
+    // 1w 6.634s
     return 0;
 }
 
